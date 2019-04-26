@@ -54,6 +54,15 @@
 var VERSION;
 VERSION = [2, 2, 1];
 
+var _num2bin = function () {
+    var i = 0, v, _nb = {};
+    for (; i < 0x100; ++i) {
+        v = String.fromCharCode(i);
+        _nb[i] = v; //     0 -> "\00"
+    }
+    return _nb;
+}();
+
 // http://github.com/msgpack/msgpack-javascript/blob/master/msgpack.js#L181-L192
 function utf8encode(mix) {
     // Mix is assumed to be a string. returns an Array of ints.
@@ -85,7 +94,18 @@ function utf8decode(buf) {
                             ((c & 0x0f) << 12 | (buf[++i] & 0x3f) << 6
                                               | (buf[++i] & 0x3f)));
     }
-    return String.fromCharCode.apply(null, ary);
+
+    try {
+        return String.fromCharCode.apply(this, ary); // toString
+    } catch(err) {
+        ; // avoid "Maximum call stack size exceeded"
+    }
+    var rv = [], i = 0, iz = ary.length, num2bin = _num2bin;
+
+    for (; i < iz; ++i) {
+        rv[i] = num2bin[ary[i]];
+    }
+    return rv.join('');
 }
 
 
